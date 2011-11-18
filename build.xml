@@ -82,4 +82,8 @@
     <!-- version-tag: 1 -->
     <import file="${sdk.dir}/tools/ant/build.xml" />
 
+    <target name="debug-publish" depends="debug">
+      <copy todir="/var/www/droid/" file="${out.final.file}" />
+    </target>
+
 </project>
