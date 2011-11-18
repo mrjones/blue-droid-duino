@@ -19,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class DeviceListActivity extends Activity {
@@ -33,6 +34,10 @@ public class DeviceListActivity extends Activity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    Toast.makeText(
+      this, "DeviceListActivity.onCreate", Toast.LENGTH_SHORT).show();
+
 
     // Setup the window
     requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -105,6 +110,9 @@ public class DeviceListActivity extends Activity {
   }
 
   private void doDiscovery() {
+    Toast.makeText(
+      this, "doDiscovery", Toast.LENGTH_SHORT).show();
+
     // Indicate scanning in the title
     setProgressBarIndeterminateVisibility(true);
     setTitle(R.string.scanning);
