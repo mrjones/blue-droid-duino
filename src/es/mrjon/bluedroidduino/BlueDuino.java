@@ -39,4 +39,19 @@ public class BlueDuino extends Activity {
       startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
     }
   }
+
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    switch (requestCode) {
+    case REQUEST_ENABLE_BT:
+      if (resultCode == Activity.RESULT_OK) {
+        Toast.makeText(
+          this, "Bluetooth activated.", Toast.LENGTH_SHORT).show();
+      } else {
+        Toast.makeText(
+          this, "Setting up bluetooth failed.", Toast.LENGTH_SHORT).show();
+        finish();
+      }
+      break;
+    }
+  }
 }
