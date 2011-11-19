@@ -9,10 +9,13 @@ import android.widget.Toast;
 
 public class BlueDuino extends Activity {
   private BluetoothAdapter bluetoothAdapter = null;
+  private BluetoothConnection connection = null;
 
   // I don't know what this is for
   private static final int REQUEST_CONNECT_DEVICE = 1;
   private static final int REQUEST_ENABLE_BT = 2;
+
+
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -56,6 +59,7 @@ public class BlueDuino extends Activity {
         Toast.makeText(
           this, "Connected to: " + address, Toast.LENGTH_SHORT).show();
 
+        connection = new BluetoothConnection(device);
       }
       break;
     case REQUEST_ENABLE_BT:
