@@ -1,5 +1,7 @@
 package es.mrjon.bluedroidduino;
 
+import java.io.IOException;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,6 +12,7 @@ import android.widget.Toast;
 public class BlueDuino extends Activity {
   private BluetoothAdapter bluetoothAdapter = null;
   private BluetoothConnection connection = null;
+  private BluetoothConnection.Future connectionFuture = null;
 
   // I don't know what this is for
   private static final int REQUEST_CONNECT_DEVICE = 1;
@@ -57,9 +60,20 @@ public class BlueDuino extends Activity {
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
 
         Toast.makeText(
-          this, "Connected to: " + address, Toast.LENGTH_SHORT).show();
+          this, "Connecting to: " + address, Toast.LENGTH_SHORT).show();
 
-        connection = new BluetoothConnection(device);
+        connectionFuture = new BluetoothConnection.Future(device);
+        connection = connectionFuture.get();
+
+        Toast.makeText(
+          this, "Established connection to: " + address, Toast.LENGTH_LONG).show();
+        try {
+            connection.write("HI!".getBytes());
+        } catch (IOException e) {
+        Toast.makeText(
+          this, "Write failed.", Toast.LENGTH_LONG).show();
+
+        }
       }
       break;
     case REQUEST_ENABLE_BT:
