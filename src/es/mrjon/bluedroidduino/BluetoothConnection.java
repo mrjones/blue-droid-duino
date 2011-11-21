@@ -11,6 +11,13 @@ import android.util.Log;
 
 public class BluetoothConnection {
 
+  // Sets up a separate thread (ConnectThread) and runs it immediately,
+  // connecting to the specified BluetoothDevice.  Execution can continue
+  // in the meantime, but you can call get() or block() at any point to
+  // wait for the connection to complete (it might complete unsucessfully).
+  //
+  // TODO(mrjones): This class is roughly what I want to do here, but it's
+  // a little awkward to use, and the API could use some more thought.
   public static class Future {
     private final BluetoothDevice device;
     private final BluetoothAdapter adapter;
@@ -32,6 +39,11 @@ public class BluetoothConnection {
     }
 
     public BluetoothConnection get() {
+      block();
+      return result;
+    }
+
+    public void block() {
       // block
       while (done == false) {
         try {
@@ -40,7 +52,10 @@ public class BluetoothConnection {
           // check the condition again, and maybe keep waiting
         }
       }
-      return result;
+    }
+
+    public boolean done() {
+      return done;
     }
 
     public boolean failed() {
@@ -54,7 +69,19 @@ public class BluetoothConnection {
     }
   }
 
+  // Thread for doing blocking operations necessary to connect to a Bluetooth
+  // device.  The result (success or failure) will be reported to a
+  // BluetoothFuture class by calling the "result" method.
   private static class ConnectThread extends Thread {
+    // See: http://developer.android.com/reference/android/bluetooth/
+    //  BluetoothDevice.html#createRfcommSocketToServiceRecord(java.util.UUID)
+    // "Hint: If you are connecting to a Bluetooth serial board then try using
+    //  the well-known SPP UUID 00001101-0000-1000-8000-00805F9B34FB. However if
+    //  you are connecting to an Android peer then please generate your own
+    //  unique UUID."
+    private static final UUID ARDUINO_UUID =
+      UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
     private final BluetoothDevice device;
     private final BluetoothAdapter adapter;
     private final Future connectionFuture;
@@ -75,9 +102,7 @@ public class BluetoothConnection {
 
       try {
         socket = this.device.createRfcommSocketToServiceRecord(
-          UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-//          UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66"));
-
+          ARDUINO_UUID);
         socket.connect();
         connectionFuture.result(true, new BluetoothConnection(device, socket));
       } catch (IOException e) {
@@ -110,5 +135,4 @@ public class BluetoothConnection {
   public void write(byte[] data) throws IOException {
     outStream.write(data);
   }
-
 }

@@ -11,14 +11,17 @@ import android.widget.Toast;
 
 public class BlueDuino extends Activity {
   private BluetoothAdapter bluetoothAdapter = null;
+
   private BluetoothConnection connection = null;
   private BluetoothConnection.Future connectionFuture = null;
 
-  // I don't know what this is for
   private static final int REQUEST_CONNECT_DEVICE = 1;
   private static final int REQUEST_ENABLE_BT = 2;
 
+  private void debug(String text) {
+    Toast.makeText(this, text, Toast.LENGTH_LONG).show();
 
+  }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -29,8 +32,7 @@ public class BlueDuino extends Activity {
 
     // If the adapter is null, then Bluetooth is not supported
     if (bluetoothAdapter == null) {
-      Toast.makeText(
-        this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+      debug("Bluetooth is not available");
       finish();
       return;
     }
@@ -51,49 +53,46 @@ public class BlueDuino extends Activity {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch (requestCode) {
     case REQUEST_CONNECT_DEVICE:
-      // When DeviceListActivity returns with a device to connect
-      if (resultCode == Activity.RESULT_OK) {
-        // Get the device MAC address
-        String address = data.getExtras()
-          .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-        // Get the BLuetoothDevice object
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
-
-        Toast.makeText(
-          this, "Connecting to: " + address, Toast.LENGTH_SHORT).show();
-
-        connectionFuture = new BluetoothConnection.Future(device);
-        if (connectionFuture.failed()) {
-          Toast.makeText(
-            this, "Connection failed", Toast.LENGTH_LONG).show();
-        } else {
-          connection = connectionFuture.get();
-          Toast.makeText(
-            this, "Established connection to: " + address, Toast.LENGTH_LONG).show();
-          try {
-            connection.write("+RR-".getBytes());
-            Toast.makeText(
-              this, "Writing message", Toast.LENGTH_LONG).show();
-          } catch (IOException e) {
-            Toast.makeText(
-              this, "Write failed.", Toast.LENGTH_LONG).show();
-          }
-        }
-      }
+      onSelectDeviceActivityResult(resultCode, data);
       break;
     case REQUEST_ENABLE_BT:
-      if (resultCode == Activity.RESULT_OK) {
-        Toast.makeText(
-          this, "Bluetooth activated.", Toast.LENGTH_SHORT).show();
-      } else {
-        Toast.makeText(
-          this, "Setting up bluetooth failed.", Toast.LENGTH_SHORT).show();
-        finish();
-      }
+      onEnableBluetoothActivityResult(resultCode, data);
       break;
     }
   }
 
+  private void onEnableBluetoothActivityResult(int resultCode, Intent data) {
+    if (resultCode == Activity.RESULT_OK) {
+      // do something interesting?
+    } else {
+      debug("Setting up bluetooth failed.");
+      finish();
+    }
+  }
+
+  private void onSelectDeviceActivityResult(int resultCode, Intent data) {
+    if (resultCode == Activity.RESULT_OK) {
+      String address = data.getExtras()
+        .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+      BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+
+      debug("Connecting to: " + address);
+
+      connectionFuture = new BluetoothConnection.Future(device);
+      if (connectionFuture.failed()) {
+        debug("Connection failed");
+      } else {
+        connection = connectionFuture.get();
+        debug("Established connection to: " + address);
+        try {
+          connection.write("+RR-".getBytes());
+          debug("Writing message");
+        } catch (IOException e) {
+          debug("Write failed.");
+        }
+      }
+    }
+  }
 
   // @Override
   // public boolean onOptionsItemSelected(MenuItem item) {
