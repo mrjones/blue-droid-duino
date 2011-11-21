@@ -49,6 +49,7 @@ public class BlueDuino extends Activity {
     final EditText transmitTextBox = (EditText) findViewById(R.id.transmit_text);
     transmitButton = (Button) findViewById(R.id.button_transmit);
     transmitButton.setEnabled(false);
+    transmitButton.setText("Connecting...");
     transmitButton.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
           synchronized (transmitTextBox) {
@@ -129,6 +130,7 @@ public class BlueDuino extends Activity {
             public void onPostExecute(Boolean failed) {
               if (!failed) {
                 localButton.setEnabled(true);
+                transmitButton.setText("Transmit");
               }
             }
         }.execute();
