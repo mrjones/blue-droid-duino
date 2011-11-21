@@ -106,9 +106,6 @@ public class DeviceListActivity extends Activity {
   }
 
   private void doDiscovery() {
-    Toast.makeText(
-      this, "doDiscovery", Toast.LENGTH_SHORT).show();
-
     // Indicate scanning in the title
     setProgressBarIndeterminateVisibility(true);
     setTitle(R.string.scanning);

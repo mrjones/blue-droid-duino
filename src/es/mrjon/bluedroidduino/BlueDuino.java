@@ -6,8 +6,10 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -17,15 +19,17 @@ import android.widget.Toast;
 public class BlueDuino extends Activity {
   private BluetoothAdapter bluetoothAdapter = null;
 
-  private BluetoothConnection connection = null;
-  private BluetoothConnection.Future connectionFuture = null;
+//  private BluetoothConnection connection = null;
+  private BluetoothConnection.ConnectionFuture connectionFuture = null;
+
+  private Button transmitButton;
 
   private static final int REQUEST_CONNECT_DEVICE = 1;
   private static final int REQUEST_ENABLE_BT = 2;
 
   private void debug(String text) {
-    Toast.makeText(this, text, Toast.LENGTH_LONG).show();
-
+//    Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    Log.i("BlueDuino", text);
   }
 
   @Override
@@ -43,7 +47,8 @@ public class BlueDuino extends Activity {
     }
 
     final EditText transmitTextBox = (EditText) findViewById(R.id.transmit_text);
-    Button transmitButton = (Button) findViewById(R.id.button_transmit);
+    transmitButton = (Button) findViewById(R.id.button_transmit);
+    transmitButton.setEnabled(false);
     transmitButton.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
           synchronized (transmitTextBox) {
@@ -52,7 +57,7 @@ public class BlueDuino extends Activity {
             transmitText.clear();
             try {
               // Disable and block until this is ready
-              connection.write(text.getBytes());
+              connectionFuture.get().write(text.getBytes());
               debug("Wrote message: " + text);
             } catch (IOException e) {
               debug("Write failed.");
@@ -75,6 +80,7 @@ public class BlueDuino extends Activity {
   }
 
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    debug("result!");
     switch (requestCode) {
     case REQUEST_CONNECT_DEVICE:
       onSelectDeviceActivityResult(resultCode, data);
@@ -98,16 +104,37 @@ public class BlueDuino extends Activity {
     if (resultCode == Activity.RESULT_OK) {
       String address = data.getExtras()
         .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-      BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+//      debug("GRD");
+      debug("extras");
+//      BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
 
-      debug("Connecting to: " + address);
+//      debug("Connecting to: " + address);
 
-      connectionFuture = new BluetoothConnection.Future(device);
+//      connectionFuture = new BluetoothConnection.ConnectionFuture(device);
+      Log.i("BlueDuino", "Creating connection");
+      connectionFuture = new BluetoothConnection.ConnectionFuture(address);
       if (connectionFuture.failed()) {
         debug("Connection failed");
       } else {
-        connection = connectionFuture.get();
-        debug("Established connection to: " + address);
+        final BluetoothConnection.ConnectionFuture localConnection = connectionFuture;
+        final Button localButton = transmitButton;
+        Log.i("BlueDuino", "Starting AsyncTask");
+        new AsyncTask<Integer, Integer, Boolean> () {
+            public Boolean doInBackground(Integer... params) {
+              localConnection.block();
+              Log.i("BlueDuino", "done blocking for connection");
+              return localConnection.failed();
+            }
+
+            public void onPostExecute(Boolean failed) {
+              if (!failed) {
+                localButton.setEnabled(true);
+              }
+            }
+        }.execute();
+//        connection = connectionFuture.get();
+        
+//        debug("Established connection to: " + address);
         // try {
         //   connection.write("+RR-".getBytes());
         //   debug("Writing message");

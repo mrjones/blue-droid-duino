@@ -18,24 +18,27 @@ public class BluetoothConnection {
   //
   // TODO(mrjones): This class is roughly what I want to do here, but it's
   // a little awkward to use, and the API could use some more thought.
-  public static class Future {
-    private final BluetoothDevice device;
+  public static class ConnectionFuture {
+//    private final BluetoothDevice device;
     private final BluetoothAdapter adapter;
+    private final String address;
 
     private BluetoothConnection result;
     private boolean failed;
     private boolean done;
     private ConnectThread thread;
     
-    public Future(BluetoothDevice device) {
-      this.device = device;
+//    public ConnectionFuture(BluetoothDevice device) {
+    public ConnectionFuture(String address) {
+//      this.device = device;
+      this.address = address;
       this.adapter = BluetoothAdapter.getDefaultAdapter();
 
       this.failed = false;
       this.done = false;
 
-      this.thread = new ConnectThread(device, adapter, this);
-      this.thread.run();
+      this.thread = new ConnectThread(address, adapter, this);
+      this.thread.start();
     }
 
     public BluetoothConnection get() {
@@ -47,7 +50,9 @@ public class BluetoothConnection {
       // block
       while (done == false) {
         try {
-          thread.wait();
+          synchronized (thread) {
+            thread.wait();
+          }
         } catch (InterruptedException e) {
           // check the condition again, and maybe keep waiting
         }
@@ -82,15 +87,18 @@ public class BluetoothConnection {
     private static final UUID ARDUINO_UUID =
       UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-    private final BluetoothDevice device;
+//    private final BluetoothDevice device;
+    private final String address;
     private final BluetoothAdapter adapter;
-    private final Future connectionFuture;
+    private final ConnectionFuture connectionFuture;
 
     public ConnectThread(
-      BluetoothDevice device,
+//      BluetoothDevice device,
+      String address,
       BluetoothAdapter adapter,
-      Future connectionFuture) {
-      this.device = device;
+      ConnectionFuture connectionFuture) {
+//      this.device = device;
+      this.address = address;
       this.adapter = adapter;
       this.connectionFuture = connectionFuture;
     }
@@ -98,13 +106,16 @@ public class BluetoothConnection {
     public void run() {
       adapter.cancelDiscovery();
 
+      BluetoothDevice device = adapter.getRemoteDevice(address);
       BluetoothSocket socket;
 
       try {
-        socket = this.device.createRfcommSocketToServiceRecord(
+        Log.i("BluetoothConnection", "Connecting...");
+        socket = device.createRfcommSocketToServiceRecord(
           ARDUINO_UUID);
         socket.connect();
         connectionFuture.result(true, new BluetoothConnection(device, socket));
+        Log.i("BluetoothConnection", "Done!");
       } catch (IOException e) {
         Log.d("BluetoothConnection", Log.getStackTraceString(e));
         connectionFuture.result(false, null);
