@@ -7,6 +7,11 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 public class BlueDuino extends Activity {
@@ -36,6 +41,25 @@ public class BlueDuino extends Activity {
       finish();
       return;
     }
+
+    final EditText transmitTextBox = (EditText) findViewById(R.id.transmit_text);
+    Button transmitButton = (Button) findViewById(R.id.button_transmit);
+    transmitButton.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+          synchronized (transmitTextBox) {
+            Editable transmitText = transmitTextBox.getText();
+            String text = transmitText.toString();
+            transmitText.clear();
+            try {
+              // Disable and block until this is ready
+              connection.write(text.getBytes());
+              debug("Wrote message: " + text);
+            } catch (IOException e) {
+              debug("Write failed.");
+            }
+          }
+        }
+      });
   }
 
   public void onStart() {
@@ -84,12 +108,12 @@ public class BlueDuino extends Activity {
       } else {
         connection = connectionFuture.get();
         debug("Established connection to: " + address);
-        try {
-          connection.write("+RR-".getBytes());
-          debug("Writing message");
-        } catch (IOException e) {
-          debug("Write failed.");
-        }
+        // try {
+        //   connection.write("+RR-".getBytes());
+        //   debug("Writing message");
+        // } catch (IOException e) {
+        //   debug("Write failed.");
+        // }
       }
     }
   }

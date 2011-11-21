@@ -9,5 +9,14 @@
     android:layout_height="wrap_content" 
     android:text="Hello World!"
     />
+<EditText android:id="@+id/transmit_text" 
+          android:layout_width="fill_parent" 
+          android:layout_height="wrap_content" />
+<Button android:id="@+id/button_transmit"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/button_transmit"
+        />
+
 </LinearLayout>
 
