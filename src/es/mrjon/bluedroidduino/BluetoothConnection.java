@@ -7,6 +7,7 @@ import java.util.UUID;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Log;
 
 public class BluetoothConnection {
 
@@ -74,15 +75,19 @@ public class BluetoothConnection {
 
       try {
         socket = this.device.createRfcommSocketToServiceRecord(
-          UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66"));
+          UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+//          UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66"));
 
         socket.connect();
         connectionFuture.result(true, new BluetoothConnection(device, socket));
       } catch (IOException e) {
+        Log.d("BluetoothConnection", Log.getStackTraceString(e));
         connectionFuture.result(false, null);
       }
 
-      notifyAll();
+      synchronized(this) {
+        notifyAll();
+      }
     }
   }
 

@@ -63,16 +63,21 @@ public class BlueDuino extends Activity {
           this, "Connecting to: " + address, Toast.LENGTH_SHORT).show();
 
         connectionFuture = new BluetoothConnection.Future(device);
-        connection = connectionFuture.get();
-
-        Toast.makeText(
-          this, "Established connection to: " + address, Toast.LENGTH_LONG).show();
-        try {
-            connection.write("HI!".getBytes());
-        } catch (IOException e) {
-        Toast.makeText(
-          this, "Write failed.", Toast.LENGTH_LONG).show();
-
+        if (connectionFuture.failed()) {
+          Toast.makeText(
+            this, "Connection failed", Toast.LENGTH_LONG).show();
+        } else {
+          connection = connectionFuture.get();
+          Toast.makeText(
+            this, "Established connection to: " + address, Toast.LENGTH_LONG).show();
+          try {
+            connection.write("+RR-".getBytes());
+            Toast.makeText(
+              this, "Writing message", Toast.LENGTH_LONG).show();
+          } catch (IOException e) {
+            Toast.makeText(
+              this, "Write failed.", Toast.LENGTH_LONG).show();
+          }
         }
       }
       break;
