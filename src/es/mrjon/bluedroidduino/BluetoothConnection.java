@@ -1,5 +1,6 @@
 package es.mrjon.bluedroidduino;
 
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.UUID;
@@ -7,6 +8,7 @@ import java.util.UUID;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.Handler;
 import android.util.Log;
 
 public class BluetoothConnection {
@@ -21,14 +23,21 @@ public class BluetoothConnection {
   public static class ConnectionFuture {
     private final BluetoothDevice device;
     private final BluetoothAdapter adapter;
+    private final Handler readHandler;
 
     private BluetoothConnection result;
     private boolean failed;
     private boolean done;
     private ConnectThread thread;
     
-    public ConnectionFuture(BluetoothDevice device) {
+    /**
+     * @param device The BluetoothDevice to establish a connection to
+     * @param readHandler A handler to notify when data is recieved from
+     *  the connection.
+     */
+    public ConnectionFuture(BluetoothDevice device, Handler readHandler) {
       this.device = device;
+      this.readHandler = readHandler;
       this.adapter = BluetoothAdapter.getDefaultAdapter();
 
       this.failed = false;
@@ -64,9 +73,14 @@ public class BluetoothConnection {
       return failed;
     }
 
-    public void result(boolean success, BluetoothConnection connection) {
-      this.failed = !success;
-      this.result = connection;
+    public void socketEstablished(BluetoothSocket socket) throws IOException {
+      this.failed = false;
+      this.result = new BluetoothConnection(device, socket, readHandler);
+      this.done = true;
+    }
+
+    public void socketFailed() {
+      this.failed = true;
       this.done = true;
     }
   }
@@ -107,11 +121,11 @@ public class BluetoothConnection {
         socket = device.createRfcommSocketToServiceRecord(
           ARDUINO_UUID);
         socket.connect();
-        connectionFuture.result(true, new BluetoothConnection(device, socket));
+        connectionFuture.socketEstablished(socket);
         Log.i("BluetoothConnection", "Done!");
       } catch (IOException e) {
         Log.d("BluetoothConnection", Log.getStackTraceString(e));
-        connectionFuture.result(false, null);
+        connectionFuture.socketFailed();
       }
 
       synchronized(this) {
@@ -120,20 +134,51 @@ public class BluetoothConnection {
     }
   }
 
-  private final BluetoothAdapter adapter;
+  private static class ReaderThread extends Thread {
+    private final InputStream inputStream;
+    private final Handler readHandler;
+
+    public ReaderThread(InputStream inputStream, Handler readHandler) {
+      this.inputStream = inputStream;
+      this.readHandler = readHandler;
+    }
+
+    public void run() {
+      setName("ReaderThread");
+
+      byte[] buffer = new byte[1024];
+      int numBytes;
+
+      while(true) {
+        try {
+          numBytes = inputStream.read(buffer);
+          if (readHandler != null) {
+            readHandler.obtainMessage(MESSAGE_READ, numBytes, -1, buffer)
+              .sendToTarget();
+          }
+        } catch (IOException e) {
+          // handle
+        }
+      }
+    }
+  }
+
   private final BluetoothDevice device;
   private final BluetoothSocket socket;
+  private final ReaderThread readerThread;
 
   private final OutputStream outStream;
 
-  public BluetoothConnection(BluetoothDevice device, BluetoothSocket socket)
+    public static final int MESSAGE_READ = 1;
+
+  public BluetoothConnection(
+    BluetoothDevice device, BluetoothSocket socket, Handler readHandler)
       throws IOException {
     this.device = device;
     this.socket = socket;
 
+    this.readerThread = new ReaderThread(socket.getInputStream(), readHandler);
     this.outStream = socket.getOutputStream();
-
-    this.adapter = BluetoothAdapter.getDefaultAdapter();
   }
 
   public void write(byte[] data) throws IOException {
