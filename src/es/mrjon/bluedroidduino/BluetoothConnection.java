@@ -179,6 +179,8 @@ public class BluetoothConnection {
 
     this.readerThread = new ReaderThread(socket.getInputStream(), readHandler);
     this.outStream = socket.getOutputStream();
+
+    this.readerThread.start();
   }
 
   public void write(byte[] data) throws IOException {

@@ -4,11 +4,6 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="Hello World!"
-    />
 <EditText android:id="@+id/transmit_text" 
           android:layout_width="fill_parent" 
           android:layout_height="wrap_content" />
@@ -17,6 +12,10 @@
         android:layout_height="wrap_content"
         android:text="@string/button_transmit"
         />
+<TextView android:id="@+id/recieved_text"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"
+          />
 
 </LinearLayout>
 

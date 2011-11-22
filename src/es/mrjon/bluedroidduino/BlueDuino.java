@@ -8,13 +8,17 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Editable;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.widget.TextView;
 
 public class BlueDuino extends Activity {
   private BluetoothAdapter bluetoothAdapter = null;
@@ -45,6 +49,9 @@ public class BlueDuino extends Activity {
       finish();
       return;
     }
+
+    TextView displayedTextBox = (TextView) findViewById(R.id.recieved_text);
+    displayedTextBox.setMovementMethod(new ScrollingMovementMethod());
 
     final EditText transmitTextBox = (EditText) findViewById(R.id.transmit_text);
     transmitButton = (Button) findViewById(R.id.button_transmit);
@@ -112,7 +119,7 @@ public class BlueDuino extends Activity {
 
       Log.i("BlueDuino", "Creating connection");
       BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
-      connectionFuture = new BluetoothConnection.ConnectionFuture(device);
+      connectionFuture = new BluetoothConnection.ConnectionFuture(device, readHandler);
       if (connectionFuture.failed()) {
         debug("Connection failed");
       } else {
@@ -145,6 +152,33 @@ public class BlueDuino extends Activity {
       }
     }
   }
+
+  private final Handler readHandler = new Handler() {
+      @Override
+      public void handleMessage(Message msg) {
+        switch (msg.what) {
+            case BluetoothConnection.MESSAGE_READ:
+                byte[] readBuf = (byte[]) msg.obj;
+                // construct a string from the valid bytes in the buffer
+                String readMessage = new String(readBuf, 0, msg.arg1);
+//                mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
+//                debug(readMessage);
+                TextView displayedTextBox = (TextView) findViewById(R.id.recieved_text);
+                displayedTextBox.append(readMessage);
+
+                final int scrollAmount = displayedTextBox.getLayout().getLineTop(
+                  displayedTextBox.getLineCount()) - displayedTextBox.getHeight();
+
+                // if there is no need to scroll, scrollAmount will be <=0
+                if (scrollAmount > 0) {
+                  displayedTextBox.scrollTo(0, scrollAmount);
+                }
+// else {
+//                  displayedTextBox.scrollTo(0,0);
+//                }
+        }
+      }
+    };
 
   // @Override
   // public boolean onOptionsItemSelected(MenuItem item) {
