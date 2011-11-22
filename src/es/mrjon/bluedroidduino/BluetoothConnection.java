@@ -19,25 +19,22 @@ public class BluetoothConnection {
   // TODO(mrjones): This class is roughly what I want to do here, but it's
   // a little awkward to use, and the API could use some more thought.
   public static class ConnectionFuture {
-//    private final BluetoothDevice device;
+    private final BluetoothDevice device;
     private final BluetoothAdapter adapter;
-    private final String address;
 
     private BluetoothConnection result;
     private boolean failed;
     private boolean done;
     private ConnectThread thread;
     
-//    public ConnectionFuture(BluetoothDevice device) {
-    public ConnectionFuture(String address) {
-//      this.device = device;
-      this.address = address;
+    public ConnectionFuture(BluetoothDevice device) {
+      this.device = device;
       this.adapter = BluetoothAdapter.getDefaultAdapter();
 
       this.failed = false;
       this.done = false;
 
-      this.thread = new ConnectThread(address, adapter, this);
+      this.thread = new ConnectThread(device, adapter, this);
       this.thread.start();
     }
 
@@ -87,18 +84,15 @@ public class BluetoothConnection {
     private static final UUID ARDUINO_UUID =
       UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-//    private final BluetoothDevice device;
-    private final String address;
+    private final BluetoothDevice device;
     private final BluetoothAdapter adapter;
     private final ConnectionFuture connectionFuture;
 
     public ConnectThread(
-//      BluetoothDevice device,
-      String address,
+      BluetoothDevice device,
       BluetoothAdapter adapter,
       ConnectionFuture connectionFuture) {
-//      this.device = device;
-      this.address = address;
+      this.device = device;
       this.adapter = adapter;
       this.connectionFuture = connectionFuture;
     }
@@ -106,7 +100,6 @@ public class BluetoothConnection {
     public void run() {
       adapter.cancelDiscovery();
 
-      BluetoothDevice device = adapter.getRemoteDevice(address);
       BluetoothSocket socket;
 
       try {

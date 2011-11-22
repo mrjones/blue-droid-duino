@@ -107,13 +107,12 @@ public class BlueDuino extends Activity {
         .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
 //      debug("GRD");
       debug("extras");
-//      BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
 
 //      debug("Connecting to: " + address);
 
-//      connectionFuture = new BluetoothConnection.ConnectionFuture(device);
       Log.i("BlueDuino", "Creating connection");
-      connectionFuture = new BluetoothConnection.ConnectionFuture(address);
+      BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+      connectionFuture = new BluetoothConnection.ConnectionFuture(device);
       if (connectionFuture.failed()) {
         debug("Connection failed");
       } else {
